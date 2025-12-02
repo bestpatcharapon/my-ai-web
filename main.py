@@ -12,67 +12,65 @@ import uvicorn
 
 app = FastAPI()
 
-# --- 1. ตั้งค่า Groq (สำหรับคุยปกติ - Llama 3.3) ---
-# ดึง Key จาก Environment Variable
+# --- 1. ตั้งค่า Groq (Llama 3.3) ---
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY)
+if GROQ_API_KEY:
+    groq_client = Groq(api_key=GROQ_API_KEY)
+else:
+    groq_client = None
 
-# --- 2. ตั้งค่า Gemini (สำหรับดูรูปภาพ) ---
-# ดึง Key จาก Environment Variable
+# --- 2. ตั้งค่า Gemini (Gemini 2.0 Flash) ---
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-
 vision_model = None
+
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        # 🔥 แก้ตรงนี้: กลับมาใช้ 1.5 Flash (ตัวเสถียร โควตาเยอะ)
-        vision_model = genai.GenerativeModel('gemini-1.5-flash')
+        # 🔥 ใช้ตัวนี้ครับ 'gemini-2.0-flash' (บัญชีคุณมีสิทธิ์ใช้ตัวนี้)
+        vision_model = genai.GenerativeModel('gemini-2.0-flash')
     except Exception as e:
-        print(f"Gemini Error: {e}")
+        print(f"Gemini Init Error: {e}")
 
 class QueryRequest(BaseModel):
     prompt: str
     image: Optional[str] = None
 
-# ส่วนหน้าบ้าน (เสิร์ฟไฟล์ HTML)
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
     try:
         with open("index.html", "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
-        return "<h1>Error: ไม่พบไฟล์ index.html (อย่าลืมอัปโหลดขึ้น GitHub นะครับ)</h1>"
+        return "<h1>Error: ไม่พบไฟล์ index.html</h1>"
 
-# ส่วนหลังบ้าน (สมอง AI)
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):
     try:
-        # 🔀 กรณีที่ 1: มีรูปภาพส่งมา -> ให้ Gemini ดู
+        # 🔀 กรณีมีรูป: ให้ Gemini 2.0 Flash ดู
         if request.image:
-            print("📸 มีรูปภาพ! ส่งให้ Gemini 1.5 Flash ดู...")
+            print("📸 มีรูปภาพ! ส่งให้ Gemini 2.0 Flash...")
             
             if not vision_model:
-                return {"result": "Error: ไม่พบ GEMINI_API_KEY ใน Server (หรือตั้งค่าผิด)"}
+                return {"result": "Error: ไม่พบ GEMINI_API_KEY หรือตั้งค่าโมเดลผิด"}
 
             try:
-                # แปลงรหัส Base64 กลับเป็นไฟล์รูป
+                # แปลงรูป
                 image_data = base64.b64decode(request.image.split(",")[1])
                 image = Image.open(io.BytesIO(image_data))
                 
                 # ถาม Gemini
-                prompt_text = request.prompt if request.prompt else "รูปนี้คืออะไร อธิบายเป็นภาษาไทย"
+                prompt_text = request.prompt if request.prompt else "รูปนี้คืออะไร อธิบายภาษาไทย"
                 response = vision_model.generate_content([prompt_text, image])
                 return {"result": response.text}
                 
             except Exception as img_err:
                 return {"result": f"Error ดูรูปไม่ได้: {str(img_err)}"}
 
-        # 📝 กรณีที่ 2: ข้อความล้วน -> ให้ Groq (Llama 3.3) ตอบ
+        # 📝 กรณีข้อความล้วน: ให้ Groq ตอบ
         else:
-            print("📝 ข้อความปกติ: ส่งให้ Llama 3.3 (70B) ตอบ...")
-            
-            if not GROQ_API_KEY:
-                return {"result": "Error: ไม่พบ GROQ_API_KEY ใน Server"}
+            print("📝 ข้อความปกติ: ส่งให้ Llama 3.3...")
+            if not groq_client:
+                return {"result": "Error: ไม่พบ GROQ_API_KEY"}
 
             chat_completion = groq_client.chat.completions.create(
                 messages=[

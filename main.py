@@ -12,25 +12,23 @@ import uvicorn
 
 app = FastAPI()
 
-# --- API Keys Configuration ---
-# ✅ ใช้ Environment Variables เพื่อความปลอดภัย
-# ตั้งค่าใน Render: Settings > Environment > Add Variable
+# --- 1. ตั้งค่า Groq (สำหรับคุยปกติ - Llama 3.3) ---
+# ดึง Key จาก Environment Variable
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+groq_client = Groq(api_key=GROQ_API_KEY)
+
+# --- 2. ตั้งค่า Gemini (สำหรับดูรูปภาพ) ---
+# ดึง Key จาก Environment Variable
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# ตรวจสอบว่ามี API Keys หรือไม่
-if not GROQ_API_KEY or not GEMINI_API_KEY:
-    print("⚠️ Warning: API Keys not found! Please set environment variables:")
-    print("   - GROQ_API_KEY")
-    print("   - GEMINI_API_KEY")
-
-# เชื่อมต่อกับ AI Services
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+vision_model = None
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    vision_model = genai.GenerativeModel('gemini-2.0-flash-exp')
-else:
-    vision_model = None
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        # 🔥 แก้ตรงนี้: กลับมาใช้ 1.5 Flash (ตัวเสถียร โควตาเยอะ)
+        vision_model = genai.GenerativeModel('gemini-1.5-flash')
+    except Exception as e:
+        print(f"Gemini Error: {e}")
 
 class QueryRequest(BaseModel):
     prompt: str
@@ -45,15 +43,19 @@ async def serve_frontend():
     except FileNotFoundError:
         return "<h1>Error: ไม่พบไฟล์ index.html (อย่าลืมอัปโหลดขึ้น GitHub นะครับ)</h1>"
 
-# ส่วนหลังบ้าน (สมอง AI สับราง)
+# ส่วนหลังบ้าน (สมอง AI)
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):
     try:
-        # 🔀 กรณีมีรูปภาพ: ส่งให้ Gemini 2.0 ดู
+        # 🔀 กรณีที่ 1: มีรูปภาพส่งมา -> ให้ Gemini ดู
         if request.image:
-            print("📸 มีรูปภาพ! ให้ Gemini 2.0 Flash ช่วยดู...")
+            print("📸 มีรูปภาพ! ส่งให้ Gemini 1.5 Flash ดู...")
+            
+            if not vision_model:
+                return {"result": "Error: ไม่พบ GEMINI_API_KEY ใน Server (หรือตั้งค่าผิด)"}
+
             try:
-                # แปลงไฟล์รูป
+                # แปลงรหัส Base64 กลับเป็นไฟล์รูป
                 image_data = base64.b64decode(request.image.split(",")[1])
                 image = Image.open(io.BytesIO(image_data))
                 
@@ -65,9 +67,13 @@ async def calculate_logic(request: QueryRequest):
             except Exception as img_err:
                 return {"result": f"Error ดูรูปไม่ได้: {str(img_err)}"}
 
-        # 📝 กรณีข้อความล้วน: ส่งให้ Groq (Llama 3.3) ตอบ
+        # 📝 กรณีที่ 2: ข้อความล้วน -> ให้ Groq (Llama 3.3) ตอบ
         else:
-            print("📝 ข้อความปกติ: ให้ Llama 3.3 (70B) ตอบ...")
+            print("📝 ข้อความปกติ: ส่งให้ Llama 3.3 (70B) ตอบ...")
+            
+            if not GROQ_API_KEY:
+                return {"result": "Error: ไม่พบ GROQ_API_KEY ใน Server"}
+
             chat_completion = groq_client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": "You are a helpful AI assistant fluent in Thai."},

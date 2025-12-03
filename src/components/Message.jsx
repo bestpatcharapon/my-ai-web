@@ -9,6 +9,11 @@ function Message({ message, isBot }) {
         {isBot ? <i className="fa-solid fa-robot"></i> : <i className="fa-solid fa-user"></i>}
       </div>
       <div className="message-content">
+        {message.image && (
+          <div className="message-image">
+            <img src={message.image} alt="Uploaded" />
+          </div>
+        )}
         <div className="message-text">{message.text}</div>
         {message.timestamp && (
           <div className="message-timestamp">

@@ -46,6 +46,18 @@
   align-items: flex-end; /* Align content to right */
 }
 
+.message-image {
+  margin-bottom: var(--spacing-sm);
+}
+
+.message-image img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  border: 1px solid var(--glass-border);
+}
+
 .message-text {
   color: var(--text-primary);
   line-height: 1.6;

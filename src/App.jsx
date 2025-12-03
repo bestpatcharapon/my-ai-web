@@ -30,6 +30,12 @@ function App() {
     }
   };
 
+  const handleClearAll = () => {
+    setConversations([]);
+    setActiveConversation(null);
+    setMessages([]);
+  };
+
   const handleSendMessage = async (text, image) => {
     if (!text.trim() && !image) return;
 
@@ -37,6 +43,7 @@ function App() {
     const userMessage = {
       role: 'user',
       text: text || '(Image sent)',
+      image: image || null,
       timestamp: new Date().toISOString()
     };
 
@@ -121,6 +128,7 @@ function App() {
         activeConversation={activeConversation}
         onNewChat={handleNewChat}
         onSelectConversation={handleSelectConversation}
+        onClearAll={handleClearAll}
       />
       <ChatArea
         messages={messages}

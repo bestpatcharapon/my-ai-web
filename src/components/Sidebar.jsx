@@ -1,7 +1,7 @@
 import './Sidebar.css';
 import { FiPlus, FiMessageSquare } from 'react-icons/fi';
 
-function Sidebar({ conversations, activeConversation, onNewChat, onSelectConversation }) {
+function Sidebar({ conversations, activeConversation, onNewChat, onSelectConversation, onClearAll }) {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
@@ -17,7 +17,7 @@ function Sidebar({ conversations, activeConversation, onNewChat, onSelectConvers
         <div className="conversations-header">
           <h2>Your conversations</h2>
           {conversations.length > 0 && (
-            <button className="clear-all-btn">Clear All</button>
+            <button className="clear-all-btn" onClick={onClearAll}>Clear All</button>
           )}
         </div>
         

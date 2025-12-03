@@ -12,37 +12,34 @@ function Sidebar({ conversations, activeConversation, onNewChat, onSelectConvers
         </div>
       </div>
       
-      <button className="new-chat-btn" onClick={onNewChat}>
-        <FiPlus size={20} />
-        <span>New chat</span>
-      </button>
-      
-      <div className="conversations-section">
-        <div className="conversations-header">
-          <h2>Your conversations</h2>
+      <div className="sidebar-content">
+        {/* New chat as list item */}
+        <button className="sidebar-item new-chat-item" onClick={onNewChat}>
+          <FiPlus size={18} />
+          <span>New chat</span>
+        </button>
+
+        {/* Conversations section */}
+        <div className="conversations-section">
           {conversations.length > 0 && (
-            <button className="clear-all-btn" onClick={onClearAll}>Clear All</button>
+            <h2 className="section-label">Your chats</h2>
           )}
-        </div>
-        
-        <div className="conversations-list">
-          {conversations.length === 0 ? (
-            <p className="empty-state">No conversations yet</p>
-          ) : (
-            conversations.map((conv) => (
+          
+          <div className="conversations-list">
+            {conversations.map((conv) => (
               <button
                 key={conv.id}
-                className={`conversation-item ${activeConversation === conv.id ? 'active' : ''}`}
+                className={`sidebar-item conversation-item ${activeConversation === conv.id ? 'active' : ''}`}
                 onClick={() => onSelectConversation(conv.id)}
               >
-                <FiMessageSquare size={18} />
+                <FiMessageSquare size={16} />
                 <span className="conversation-title">{conv.title}</span>
               </button>
-            ))
-          )}
+            ))}
+          </div>
         </div>
       </div>
-      
+
       <div className="sidebar-footer">
         <div className="user-profile">
           <div className="user-avatar">

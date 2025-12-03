@@ -40,6 +40,20 @@ function ChatArea({ messages, onSendMessage, isLoading }) {
                 isBot={msg.role === 'bot'}
               />
             ))}
+            {isLoading && (
+              <div className="message bot typing-indicator">
+                <div className="message-avatar">
+                  <i className="fa-solid fa-robot"></i>
+                </div>
+                <div className="message-content">
+                  <div className="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}

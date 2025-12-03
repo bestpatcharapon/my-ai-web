@@ -46,6 +46,8 @@ function App() {
 
     try {
       // Call backend API
+      console.log('🚀 Sending request to /calculate:', { prompt: text, hasImage: !!image });
+      
       const response = await fetch('/calculate', {
         method: 'POST',
         headers: {
@@ -57,7 +59,10 @@ function App() {
         }),
       });
 
+      console.log('📡 Response status:', response.status);
+      
       const data = await response.json();
+      console.log('📦 Response data:', data);
 
       // Add bot response
       const botMessage = {
@@ -66,7 +71,11 @@ function App() {
         timestamp: new Date().toISOString()
       };
 
+      console.log('🤖 Bot message created:', botMessage);
+
       const updatedMessages = [...newMessages, botMessage];
+      console.log('💬 Updated messages:', updatedMessages);
+      
       setMessages(updatedMessages);
 
       // Update conversation
@@ -93,7 +102,7 @@ function App() {
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error:', error);
       const errorMessage = {
         role: 'bot',
         text: 'Sorry, there was an error processing your request. Please make sure the backend is running.',

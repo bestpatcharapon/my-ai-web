@@ -1,12 +1,13 @@
 import './Sidebar.css';
 import { FiPlus, FiMessageSquare } from 'react-icons/fi';
+import logo from '/public/gg.png';
 
 function Sidebar({ conversations, activeConversation, onNewChat, onSelectConversation, onClearAll }) {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-title-wrapper">
-          <img src="/gg.png" alt="Logo" className="sidebar-logo" />
+          <img src={logo} alt="Logo" className="sidebar-logo" />
           <h1 className="sidebar-title gradient-text">Best AI Chatbot</h1>
         </div>
       </div>

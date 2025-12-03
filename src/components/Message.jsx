@@ -1,6 +1,8 @@
 import './Message.css';
 
 function Message({ message, isBot }) {
+  console.log('📨 Message component render:', { isBot, text: message.text?.substring(0, 50) });
+  
   return (
     <div className={`message ${isBot ? 'bot' : 'user'} animate-slide-in`}>
       <div className="message-avatar">

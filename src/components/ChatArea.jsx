@@ -6,6 +6,9 @@ import MessageInput from './MessageInput';
 function ChatArea({ messages, onSendMessage, isLoading }) {
   const messagesEndRef = useRef(null);
 
+  console.log('🎨 ChatArea render - messages count:', messages.length);
+  console.log('🎨 ChatArea render - messages:', messages);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };

@@ -3,15 +3,22 @@ import './MessageInput.css';
 import { FiSend, FiImage } from 'react-icons/fi';
 
 function MessageInput({ onSendMessage, isLoading }) {
-  const [message, setMessage] = useState('');
-  const [image, setImage] = useState(null);
+  const [inputText, setInputText] = useState('');
+  const [previewImage, setPreviewImage] = useState(null);
+  const [imageData, setImageData] = useState(null);
+  const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (message.trim() || image) {
-      onSendMessage(message, image);
-      setMessage('');
-      setImage(null);
+    if (inputText.trim() || imageData) {
+      onSendMessage(inputText, imageData);
+      setInputText('');
+      setPreviewImage(null);
+      setImageData(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Clear the file input
+      }
     }
   };
 
@@ -24,20 +31,53 @@ function MessageInput({ onSendMessage, isLoading }) {
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
-    if (file) {
+    if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImage(reader.result);
+        setPreviewImage(URL.createObjectURL(file));
+        setImageData(reader.result);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        e.preventDefault();
+        const file = items[i].getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setPreviewImage(URL.createObjectURL(file));
+            setImageData(reader.result);
+          };
+          reader.readAsDataURL(file);
+        }
+        break;
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage); // Clean up the object URL
+    }
+    setPreviewImage(null);
+    setImageData(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Clear the file input
+    }
+  };
+
   return (
     <form className="message-input-container" onSubmit={handleSubmit}>
-      {image && (
+      {previewImage && (
         <div className="image-preview">
-          <img src={image} alt="Preview" />
+          <img src={previewImage} alt="Preview" />
           <button
             type="button"
             className="remove-image-btn"
@@ -56,15 +96,18 @@ function MessageInput({ onSendMessage, isLoading }) {
             accept="image/*"
             onChange={handleImageSelect}
             style={{ display: 'none' }}
+            ref={fileInputRef}
           />
         </label>
         
         <textarea
+          ref={textareaRef}
           className="message-input"
           placeholder="What's in your mind?..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyDown={handleKeyPress}
+          onPaste={handlePaste}
           disabled={isLoading}
           rows={1}
         />
@@ -72,7 +115,7 @@ function MessageInput({ onSendMessage, isLoading }) {
         <button
           type="submit"
           className="send-btn"
-          disabled={isLoading || (!message.trim() && !image)}
+          disabled={isLoading || (!inputText.trim() && !imageData)}
         >
           {isLoading ? (
             <div className="loading-spinner" />

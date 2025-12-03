@@ -6,7 +6,7 @@ function Sidebar({ conversations, activeConversation, onNewChat, onSelectConvers
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-title-wrapper">
-          <img src="/logo.png" alt="Logo" className="sidebar-logo" />
+          <img src="/gg.png" alt="Logo" className="sidebar-logo" />
           <h1 className="sidebar-title gradient-text">Best AI Chatbot</h1>
         </div>
       </div>

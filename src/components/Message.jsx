@@ -6,7 +6,7 @@ function Message({ message, isBot }) {
   return (
     <div className={`message ${isBot ? 'bot' : 'user'} animate-slide-in`}>
       <div className="message-avatar">
-        {isBot ? '🤖' : '👤'}
+        {isBot ? <i className="fa-solid fa-robot"></i> : <i className="fa-solid fa-user"></i>}
       </div>
       <div className="message-content">
         <div className="message-text">{message.text}</div>

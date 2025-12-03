@@ -7,6 +7,11 @@
   animation: slideIn 0.4s ease-out;
 }
 
+/* User messages - align right */
+.message.user {
+  justify-content: flex-end;
+}
+
 .message-avatar {
   width: 36px;
   height: 36px;
@@ -25,11 +30,20 @@
   border-color: var(--accent-medium);
 }
 
+.message.user .message-avatar {
+  order: 2; /* Move avatar to the right */
+}
+
 .message-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
+  max-width: 70%;
+}
+
+.message.user .message-content {
+  align-items: flex-end; /* Align content to right */
 }
 
 .message-text {
@@ -40,14 +54,18 @@
 }
 
 .message.user .message-text {
+  background: var(--accent-medium);
+  color: var(--text-primary);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--accent-strong);
+}
+
+.message.bot .message-text {
   background: var(--glass-bg);
   padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
-  max-width: fit-content;
-}
-
-.message.bot .message-text {
   color: var(--text-secondary);
 }
 

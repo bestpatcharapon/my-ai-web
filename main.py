@@ -109,4 +109,13 @@ async def calculate_logic(request: QueryRequest):
         return {"result": f"Error: {str(e)}"}
 
 if __name__ == "__main__":
+    # Startup logging
+    print("=" * 50)
+    print("Starting AI Chatbot Server...")
+    print(f"  - dist/index.html exists: {os.path.exists('dist/index.html')}")
+    print(f"  - index.html exists: {os.path.exists('index.html')}")
+    if os.path.exists("dist"):
+        print(f"  - dist/ contents: {os.listdir('dist')}")
+    print("=" * 50)
+    
     uvicorn.run(app, host="0.0.0.0", port=10000)

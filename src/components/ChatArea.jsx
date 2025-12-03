@@ -19,10 +19,6 @@ function ChatArea({ messages, onSendMessage, isLoading }) {
 
   return (
     <div className="chat-area">
-      <div className="chat-header">
-        <h2 className="chat-title">Best AI Chatbot</h2>
-        <p className="chat-subtitle">Ask me anything...</p>
-      </div>
       
       <div className="messages-container">
         {messages.length === 0 ? (

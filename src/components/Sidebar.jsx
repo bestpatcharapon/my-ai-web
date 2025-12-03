@@ -5,7 +5,10 @@ function Sidebar({ conversations, activeConversation, onNewChat, onSelectConvers
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h1 className="sidebar-title gradient-text">Best AI Chatbot</h1>
+        <div className="sidebar-title-wrapper">
+          <img src="/logo.png" alt="Logo" className="sidebar-logo" />
+          <h1 className="sidebar-title gradient-text">Best AI Chatbot</h1>
+        </div>
       </div>
       
       <button className="new-chat-btn" onClick={onNewChat}>

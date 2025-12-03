@@ -9,13 +9,27 @@
 }
 
 .sidebar-header {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl) var(--spacing-lg);
   border-bottom: 1px solid var(--glass-border);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.sidebar-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.sidebar-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 .sidebar-title {
   font-family: var(--font-heading);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: 0.5px;
 }

@@ -56,21 +56,22 @@ class QueryRequest(BaseModel):
     prompt: str
     image: Optional[str] = None
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 async def serve_frontend():
-    try:
-        # Try to serve React build (production)
-        if os.path.exists("dist/index.html"):
-            with open("dist/index.html", "r", encoding="utf-8") as f:
-                return f.read()
-        # Fallback to old index.html (if exists)
-        elif os.path.exists("index.html"):
-            with open("index.html", "r", encoding="utf-8") as f:
-                return f.read()
-        else:
-            return HTMLResponse("<h1>AI Chatbot Backend Running</h1><p>Frontend not built yet. Run: npm run build</p>")
-    except Exception as e:
-        return HTMLResponse(f"<h1>Error</h1><p>{str(e)}</p>")
+    """Serve React production build or development fallback"""
+    # Production: serve from dist/
+    if os.path.exists("dist/index.html"):
+        with open("dist/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    # Development fallback
+    elif os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    else:
+        return HTMLResponse(
+            content="<h1>AI Chatbot Backend Running</h1><p>Frontend not built. Run: npm run build</p>",
+            status_code=200
+        )
 
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):

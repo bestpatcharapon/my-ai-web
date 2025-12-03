@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import './MessageInput.css';
 import { FiSend, FiImage } from 'react-icons/fi';
 

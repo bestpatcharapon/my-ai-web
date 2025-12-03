@@ -60,9 +60,10 @@
 
 .message-text {
   color: var(--text-primary);
-  line-height: 1.6;
-  font-size: 0.95rem;
+  line-height: 1.8;
+  font-size: 1rem;
   word-wrap: break-word;
+  letter-spacing: 0.01em;
 }
 
 .message.user .message-text {
@@ -78,7 +79,7 @@
   padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .message-timestamp {

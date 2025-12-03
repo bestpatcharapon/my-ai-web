@@ -21,7 +21,7 @@ vision_model = None
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        vision_model = genai.GenerativeModel('gemini-1.5-flash-001') # หรือ 2.0-flash
+        vision_model = genai.GenerativeModel('gemini-2.0-flash') # หรือ 2.0-flash
     except: pass
 
 # 🔥 ปรับจูนใหม่: สูตร "กลมกล่อม" (Natural & Fun)

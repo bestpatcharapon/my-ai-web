@@ -2,7 +2,9 @@ import os
 import io
 import base64
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 from groq import Groq
@@ -11,6 +13,21 @@ from PIL import Image
 import uvicorn
 
 app = FastAPI()
+
+# Add CORS middleware - allowing both dev and production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, you might want to restrict this
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files (React build)
+if os.path.exists("dist"):
+    app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
+
+
 
 # --- Config Keys ---
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
@@ -42,9 +59,18 @@ class QueryRequest(BaseModel):
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
     try:
-        with open("index.html", "r", encoding="utf-8") as f:
-            return f.read()
-    except: return "Error"
+        # Try to serve React build (production)
+        if os.path.exists("dist/index.html"):
+            with open("dist/index.html", "r", encoding="utf-8") as f:
+                return f.read()
+        # Fallback to old index.html (if exists)
+        elif os.path.exists("index.html"):
+            with open("index.html", "r", encoding="utf-8") as f:
+                return f.read()
+        else:
+            return HTMLResponse("<h1>AI Chatbot Backend Running</h1><p>Frontend not built yet. Run: npm run build</p>")
+    except Exception as e:
+        return HTMLResponse(f"<h1>Error</h1><p>{str(e)}</p>")
 
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):

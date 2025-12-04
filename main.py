@@ -101,6 +101,7 @@ def format_response(text: str) -> str:
     return text.strip()
 
 @app.get("/")
+@app.head("/")
 async def serve_frontend():
     """Serve React production build or development fallback"""
     # Production: serve from dist/
@@ -116,6 +117,18 @@ async def serve_frontend():
             content="<h1>AI Chatbot Backend Running</h1><p>Frontend not built. Run: npm run build</p>",
             status_code=200
         )
+
+@app.get("/gg.png")
+async def serve_logo():
+    """Serve logo file"""
+    # Try dist/ first (production)
+    if os.path.exists("dist/gg.png"):
+        return FileResponse("dist/gg.png")
+    # Fallback to public/ (development)
+    elif os.path.exists("public/gg.png"):
+        return FileResponse("public/gg.png")
+    else:
+        return {"error": "Logo not found"}
 
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):

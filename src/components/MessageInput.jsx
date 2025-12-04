@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './MessageInput.css';
 import { FiSend, FiPlus } from 'react-icons/fi';
+import VoiceButton from './VoiceButton';
 
 function MessageInput({ onSendMessage, isLoading }) {
   const [inputText, setInputText] = useState('');
@@ -8,6 +9,12 @@ function MessageInput({ onSendMessage, isLoading }) {
   const [imageData, setImageData] = useState(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // Handler สำหรับรับข้อความจาก Voice
+  const handleVoiceTranscript = (transcript) => {
+    console.log('📝 Setting input text:', transcript);
+    setInputText(transcript);
+  };
 
   // ✅ Auto-resize textarea ตามเนื้อหา
   useEffect(() => {
@@ -109,24 +116,30 @@ function MessageInput({ onSendMessage, isLoading }) {
           rows={1}
           disabled={isLoading}
         />
-        
-        <div className="button-row">
-          <label className="image-upload-btn" title="Upload image">
-            <FiPlus size={22} />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              style={{ display: 'none' }}
-              ref={fileInputRef}
-            />
-          </label>
+                <div className="button-row">
+            <div className="left-buttons">
+              <label className="image-upload-btn" title="Upload image">
+                <FiPlus size={22} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  style={{ display: 'none' }}
+                  ref={fileInputRef}
+                />
+              </label>
+              
+              <VoiceButton 
+                onTranscript={handleVoiceTranscript}
+                disabled={isLoading}
+              />
+            </div>
           
           <button 
             type="submit"
             className="send-btn" 
             disabled={isLoading || (!inputText.trim() && !imageData)}
-          >
+            >
             {isLoading ? (
               <div className="loading-spinner"></div>
             ) : (

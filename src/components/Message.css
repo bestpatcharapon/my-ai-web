@@ -69,10 +69,9 @@
 
 .message.user .message-text {
   background: var(--accent-medium);
-  color: var(--text-primary);
-  padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--accent-strong);
+  padding: var(--spacing-md) var(--spacing-lg);
+  color: #fff;
 }
 
 .message.bot .message-text {
@@ -81,6 +80,41 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
+}
+
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.message.bot:hover .message-actions {
+  opacity: 1;
+}
+
+.icon-btn {
+  padding: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
 }
 
 .message-timestamp {

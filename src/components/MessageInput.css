@@ -68,6 +68,12 @@
   gap: 12px;
 }
 
+.left-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .image-upload-btn {
   color: var(--text-secondary);
   cursor: pointer;

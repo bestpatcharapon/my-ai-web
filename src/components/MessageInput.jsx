@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import './MessageInput.css';
-import { FiSend, FiImage } from 'react-icons/fi';
+import { FiSend, FiPlus } from 'react-icons/fi';
 
 function MessageInput({ onSendMessage, isLoading }) {
   const [inputText, setInputText] = useState('');
@@ -99,39 +99,41 @@ function MessageInput({ onSendMessage, isLoading }) {
       )}
       
       <div className="input-wrapper">
-        <label className="image-upload-btn" title="Upload image">
-          <FiImage size={20} />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageSelect}
-            style={{ display: 'none' }}
-            ref={fileInputRef}
-          />
-        </label>
-        
         <textarea
           ref={textareaRef}
           className="message-input"
-          placeholder="What's in your mind?..."
+          placeholder="ส่งข้อความถึง Best Bot"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyPress}
-          onPaste={handlePaste}
+          rows={1}
           disabled={isLoading}
         />
         
-        <button
-          type="submit"
-          className="send-btn"
-          disabled={isLoading || (!inputText.trim() && !imageData)}
-        >
-          {isLoading ? (
-            <div className="loading-spinner" />
-          ) : (
-            <FiSend size={20} />
-          )}
-        </button>
+        <div className="button-row">
+          <label className="image-upload-btn" title="Upload image">
+            <FiPlus size={22} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              style={{ display: 'none' }}
+              ref={fileInputRef}
+            />
+          </label>
+          
+          <button 
+            type="submit"
+            className="send-btn" 
+            disabled={isLoading || (!inputText.trim() && !imageData)}
+          >
+            {isLoading ? (
+              <div className="loading-spinner"></div>
+            ) : (
+              <FiSend size={18} />
+            )}
+          </button>
+        </div>
       </div>
     </form>
   );

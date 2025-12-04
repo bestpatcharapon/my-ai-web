@@ -91,7 +91,7 @@ function MessageInput({ onSendMessage, isLoading }) {
           <button
             type="button"
             className="remove-image-btn"
-            onClick={() => setImage(null)}
+            onClick={handleRemoveImage}
           >
             ×
           </button>

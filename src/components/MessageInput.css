@@ -43,7 +43,7 @@
 
 .input-wrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-end; /* ปุ่มจะอยู่ด้านล่างเมื่อ textarea สูงขึ้น */
   gap: var(--spacing-md);
   background: var(--bg-tertiary);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -84,9 +84,11 @@
   resize: none;
   outline: none;
   box-shadow: none;
-  max-height: 120px;
+  min-height: 24px; /* ความสูงขั้นต่ำ 1 บรรทัด */
+  max-height: 150px; /* ความสูงสูงสุด ~6 บรรทัด */
   overflow-y: auto;
   line-height: 1.5;
+  transition: height 0.1s ease; /* เพิ่ม smooth transition */
 }
 
 .message-input:focus {

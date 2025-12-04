@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './MessageInput.css';
 import { FiSend, FiImage } from 'react-icons/fi';
 
@@ -8,6 +8,15 @@ function MessageInput({ onSendMessage, isLoading }) {
   const [imageData, setImageData] = useState(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // ✅ Auto-resize textarea ตามเนื้อหา
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto'; // รีเซ็ตความสูง
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`; // ขยายตาม content (max 150px)
+    }
+  }, [inputText]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -23,6 +32,7 @@ function MessageInput({ onSendMessage, isLoading }) {
   };
 
   const handleKeyPress = (e) => {
+    // Enter = ส่งข้อความ | Shift+Enter = ขึ้นบรรทัดใหม่
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -109,7 +119,6 @@ function MessageInput({ onSendMessage, isLoading }) {
           onKeyDown={handleKeyPress}
           onPaste={handlePaste}
           disabled={isLoading}
-          rows={1}
         />
         
         <button

@@ -27,8 +27,8 @@ if os.path.exists("dist"):
 
 
 
-# --- Config Keys with Fallback ---
-# รองรับหลาย API Keys สำหรับ Fallback
+# --- Config Keys with Round Robin ---
+# รองรับหลาย API Keys สลับกันใช้ (Round Robin)
 GROQ_API_KEYS = []
 
 # โหลด API Keys ทั้งหมด (GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, ...)
@@ -43,13 +43,25 @@ if backup_key:
 # สร้าง clients สำหรับแต่ละ key
 groq_clients = [Groq(api_key=key) for key in GROQ_API_KEYS]
 
-def get_groq_client(index=0):
-    """ดึง Groq client ตาม index"""
-    if index < len(groq_clients):
-        return groq_clients[index]
-    return None
+# 🔄 Round Robin Counter - สลับใช้ keys ทีละตัว
+current_key_index = 0
 
-print(f"🔑 Loaded {len(GROQ_API_KEYS)} Groq API Key(s)")
+def get_next_client():
+    """ดึง Groq client ตัวถัดไป (Round Robin)"""
+    global current_key_index
+    if not groq_clients:
+        return None, -1
+    
+    # ดึง client ปัจจุบัน
+    client = groq_clients[current_key_index]
+    used_index = current_key_index
+    
+    # สลับไป key ถัดไป (วนรอบ)
+    current_key_index = (current_key_index + 1) % len(groq_clients)
+    
+    return client, used_index
+
+print(f"🔑 Loaded {len(GROQ_API_KEYS)} Groq API Key(s) - Round Robin Mode")
 
 AI_SYSTEM_PROMPT = """
 คุณคือ 'Best Bot' เพื่อน AI ที่ชิลล์และเป็นกันเอง 😎
@@ -142,17 +154,31 @@ async def serve_logo():
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):
     """
-    ระบบ Fallback: ลอง API Key แรกก่อน ถ้าโดน rate limit จะสลับไป Key ถัดไป
+    ระบบ Round Robin + Fallback:
+    - สลับใช้ API Keys ทีละตัวทุก request (กระจายโหลด)
+    - ถ้า Key ปัจจุบันโดน rate limit จะลอง Key อื่น
     """
     if not groq_clients:
         return {"result": "Error: ไม่พบ Groq API Key"}
     
-    last_error = None
+    # 🔄 Round Robin: ดึง client ตัวถัดไป
+    primary_client, primary_index = get_next_client()
     
-    # ลอง API Keys ทีละตัว
-    for key_index, client in enumerate(groq_clients):
+    # สร้างลำดับการลอง: เริ่มจาก primary แล้ววนไป keys อื่น
+    tried_indices = set()
+    
+    for attempt in range(len(groq_clients)):
+        # คำนวณ index ที่จะใช้ (เริ่มจาก primary แล้ววนไป)
+        current_index = (primary_index + attempt) % len(groq_clients)
+        
+        if current_index in tried_indices:
+            continue
+        tried_indices.add(current_index)
+        
+        client = groq_clients[current_index]
+        
         try:
-            # 📸 Vision - ใช้ Groq Llama 3.2 Vision
+            # 📸 Vision - ใช้ Llama 4 Scout
             if request.image:
                 prompt_text = request.prompt if request.prompt else "รูปนี้คืออะไร"
                 full_prompt = f"{AI_SYSTEM_PROMPT}\n\nโจทย์รูปภาพ: {prompt_text}"
@@ -172,14 +198,14 @@ async def calculate_logic(request: QueryRequest):
                             ]
                         }
                     ],
-                    model="meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Vision (แทน llama-3.2-90b ที่ถูกยกเลิก)
+                    model="meta-llama/llama-4-scout-17b-16e-instruct",
                     temperature=0.7,
                     max_tokens=1024,
                 )
-                print(f"✅ Vision สำเร็จด้วย Key #{key_index + 1}")
+                print(f"✅ Vision สำเร็จด้วย Key #{current_index + 1}")
                 return {"result": format_response(chat_completion.choices[0].message.content)}
             
-            # 📝 Text - ใช้ Groq Llama 3.3
+            # 📝 Text - ใช้ Llama 3.3
             else:
                 chat_completion = client.chat.completions.create(
                     messages=[
@@ -190,18 +216,18 @@ async def calculate_logic(request: QueryRequest):
                     temperature=0.7,
                     max_tokens=1024,
                 )
-                print(f"✅ Text สำเร็จด้วย Key #{key_index + 1}")
+                print(f"✅ Text สำเร็จด้วย Key #{current_index + 1}")
                 return {"result": format_response(chat_completion.choices[0].message.content)}
         
         except Exception as e:
-            last_error = str(e)
+            error_msg = str(e)
             # ถ้าเป็น rate limit error ให้ลอง key ถัดไป
-            if "rate" in last_error.lower() or "limit" in last_error.lower() or "429" in last_error:
-                print(f"⚠️ Key #{key_index + 1} โดน rate limit, สลับไป Key ถัดไป...")
+            if "rate" in error_msg.lower() or "limit" in error_msg.lower() or "429" in error_msg:
+                print(f"⚠️ Key #{current_index + 1} โดน rate limit, สลับไป Key ถัดไป...")
                 continue
             else:
                 # ถ้าเป็น error อื่น ให้ return ทันที
-                return {"result": f"Error: {last_error}"}
+                return {"result": f"Error: {error_msg}"}
     
     # ถ้าลองทุก key แล้วยังไม่ได้
     return {"result": f"❌ API Keys ทั้งหมดโดน rate limit กรุณารอสักครู่แล้วลองใหม่"}

@@ -172,7 +172,7 @@ async def calculate_logic(request: QueryRequest):
                             ]
                         }
                     ],
-                    model="llama-3.2-90b-vision-preview",
+                    model="meta-llama/llama-4-scout-17b-16e-instruct",  # Llama 4 Vision (แทน llama-3.2-90b ที่ถูกยกเลิก)
                     temperature=0.7,
                     max_tokens=1024,
                 )

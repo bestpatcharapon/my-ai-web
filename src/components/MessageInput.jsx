@@ -113,6 +113,7 @@ function MessageInput({ onSendMessage, isLoading }) {
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyDown={handleKeyPress}
+          onPaste={handlePaste}
           rows={1}
           disabled={isLoading}
         />

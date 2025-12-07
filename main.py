@@ -8,8 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 from groq import Groq
-import google.generativeai as genai
-from PIL import Image
 import uvicorn
 
 app = FastAPI()
@@ -29,17 +27,29 @@ if os.path.exists("dist"):
 
 
 
-# --- Config Keys ---
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+# --- Config Keys with Fallback ---
+# รองรับหลาย API Keys สำหรับ Fallback
+GROQ_API_KEYS = []
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-vision_model = None
-if GEMINI_API_KEY:
-    try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        vision_model = genai.GenerativeModel('gemini-2.0-flash') # หรือ 2.0-flash
-    except: pass
+# โหลด API Keys ทั้งหมด (GROQ_API_KEY, GROQ_API_KEY_2, GROQ_API_KEY_3, ...)
+primary_key = os.environ.get("GROQ_API_KEY")
+if primary_key:
+    GROQ_API_KEYS.append(primary_key)
+
+backup_key = os.environ.get("GROQ_API_KEY_2")
+if backup_key:
+    GROQ_API_KEYS.append(backup_key)
+
+# สร้าง clients สำหรับแต่ละ key
+groq_clients = [Groq(api_key=key) for key in GROQ_API_KEYS]
+
+def get_groq_client(index=0):
+    """ดึง Groq client ตาม index"""
+    if index < len(groq_clients):
+        return groq_clients[index]
+    return None
+
+print(f"🔑 Loaded {len(GROQ_API_KEYS)} Groq API Key(s)")
 
 AI_SYSTEM_PROMPT = """
 คุณคือ 'Best Bot' เพื่อน AI ที่ชิลล์และเป็นกันเอง 😎
@@ -131,38 +141,70 @@ async def serve_logo():
 
 @app.post("/calculate")
 async def calculate_logic(request: QueryRequest):
-    try:
-        # 📸 Vision
-        if request.image:
-            if not vision_model: return {"result": "Error Gemini"}
-            try:
-                image_data = base64.b64decode(request.image.split(",")[1])
-                image = Image.open(io.BytesIO(image_data))
+    """
+    ระบบ Fallback: ลอง API Key แรกก่อน ถ้าโดน rate limit จะสลับไป Key ถัดไป
+    """
+    if not groq_clients:
+        return {"result": "Error: ไม่พบ Groq API Key"}
+    
+    last_error = None
+    
+    # ลอง API Keys ทีละตัว
+    for key_index, client in enumerate(groq_clients):
+        try:
+            # 📸 Vision - ใช้ Groq Llama 3.2 Vision
+            if request.image:
                 prompt_text = request.prompt if request.prompt else "รูปนี้คืออะไร"
-                
                 full_prompt = f"{AI_SYSTEM_PROMPT}\n\nโจทย์รูปภาพ: {prompt_text}"
-                response = vision_model.generate_content([full_prompt, image])
-                return {"result": format_response(response.text)}
-            except Exception as e: return {"result": str(e)}
-
-        # 📝 Text
-        else:
-            if not groq_client: return {"result": "Error Groq"}
+                
+                chat_completion = client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": full_prompt},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": request.image
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    model="llama-3.2-90b-vision-preview",
+                    temperature=0.7,
+                    max_tokens=1024,
+                )
+                print(f"✅ Vision สำเร็จด้วย Key #{key_index + 1}")
+                return {"result": format_response(chat_completion.choices[0].message.content)}
             
-            chat_completion = groq_client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": AI_SYSTEM_PROMPT},
-                    {"role": "user", "content": request.prompt}
-                ],
-                model="llama-3.3-70b-versatile",
-                # 🔥 ลด Temperature ลงเหลือ 0.7 (ให้มันนิ่งขึ้น ไม่ฟุ้งซ่านเกินไป)
-                temperature=0.7, 
-                max_tokens=1024,
-            )
-            return {"result": format_response(chat_completion.choices[0].message.content)}
+            # 📝 Text - ใช้ Groq Llama 3.3
+            else:
+                chat_completion = client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": AI_SYSTEM_PROMPT},
+                        {"role": "user", "content": request.prompt}
+                    ],
+                    model="llama-3.3-70b-versatile",
+                    temperature=0.7,
+                    max_tokens=1024,
+                )
+                print(f"✅ Text สำเร็จด้วย Key #{key_index + 1}")
+                return {"result": format_response(chat_completion.choices[0].message.content)}
         
-    except Exception as e:
-        return {"result": f"Error: {str(e)}"}
+        except Exception as e:
+            last_error = str(e)
+            # ถ้าเป็น rate limit error ให้ลอง key ถัดไป
+            if "rate" in last_error.lower() or "limit" in last_error.lower() or "429" in last_error:
+                print(f"⚠️ Key #{key_index + 1} โดน rate limit, สลับไป Key ถัดไป...")
+                continue
+            else:
+                # ถ้าเป็น error อื่น ให้ return ทันที
+                return {"result": f"Error: {last_error}"}
+    
+    # ถ้าลองทุก key แล้วยังไม่ได้
+    return {"result": f"❌ API Keys ทั้งหมดโดน rate limit กรุณารอสักครู่แล้วลองใหม่"}
 
 if __name__ == "__main__":
     # Startup logging
